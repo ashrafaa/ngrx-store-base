@@ -2,26 +2,99 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.0.8.
 
-## Development server
+# Installation
+npm i --save @ngrx/store
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+# Steps
+1- Create the data models to store
 
-## Code scaffolding
+```
+export interface Data {
+  name: string;
+}
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+2- Create the actions - action type (string) and/or data payload (optional)
 
-## Build
+```
+import { Action } from '@ngrx/store';
+import { Data } from '../model';
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+export const ACTION_1 = 'Action 1';
 
-## Running unit tests
+export class ActionTask1 implements Action {
+  readonly type = ACTION_1;
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+  constructor(public payload: Data) {}
+}
 
-## Running end-to-end tests
+export type Actions = ActionTask1
+```
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+3- Create the reducer - takes incoming action and decides what to do; takes previous state and return new state based on given action
 
-## Further help
+```
+import { Data } from '../model';
+import * as TaskAction from '../task.action';
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+const initialState: Data = {
+  name: 'Task 1'
+}
+
+export function reducer (
+  state: Data = [initialState],
+  action: TaskAction.Actions 
+) {
+  switch (action.type) {
+    case TaskAction.ACTION_1:
+      return [...state, action.payload];
+    default:
+      return state;
+  }
+}
+```
+
+4- Create app state - main state shared between components
+
+```
+import { Data } from '../model';
+
+export interface AppState {
+  readonly data: Data[];
+}
+```
+
+5- Update app.module
+
+```
+import { StoreModule } from '@ngrx/store';
+import { reducer } from './reducers/tutorial.reducer';
+
+imports: [
+    StoreModule.forRoot({
+      data: reducer
+    })
+  ],
+```
+
+6- Access from component
+
+```
+import { Observable } from 'rxjs/Observable';
+import { Store } from '@ngrx/store';
+import { Data } from '../model';
+import { AppState } from '../app.state';
+
+export class SomeComponent implements OnInit {
+
+  datas: Observable<Data[]>;
+
+  constructor(private store: Store<AppState>) { 
+    this.datas = store.select('data');
+  }
+
+  actionTask(name) {
+    this.store.dispatch(new TutorialActions.ActionTask1({ name: name }));
+  }
+}
+```
